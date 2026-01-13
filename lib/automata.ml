@@ -77,7 +77,7 @@ struct
         let table = step_table states alpha step in
 
         let invalid_trans =
-          List.find_opt (fun (_, _, q) -> QS.mem q states) table
+          List.find_opt (fun (_, _, q) -> not (QS.mem q states)) table
         in
 
         match invalid_trans with
