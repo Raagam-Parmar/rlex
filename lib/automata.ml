@@ -54,7 +54,8 @@ struct
 
     let eps_closure nfa (s : QS.t) =
       let rec go t =
-        let t' = QS.map_union (fun s -> nfa.step s Eps) t in
+        let t' =
+          QS.map_union (fun s -> nfa.step s Eps) t in
         let dif = QS.diff t' t in
         if QS.is_empty dif
         then t
@@ -62,5 +63,22 @@ struct
       in
       go s
 
+    let rec step' nfa (q : Q.t) (str : str) =
+      match str with
+      | []      -> eps_closure nfa (QS.singleton nfa.init)
+      | s::str' ->
+        let reachable = eps_closure nfa (nfa.step q (Sym s)) in
+        QS.map_union (fun r -> step' nfa r str') reachable
+
+    let accepts nfa (str : str) =
+      let final = step' nfa nfa.init str in
+      let inter = QS.inter final nfa.final in
+      not (QS.is_empty inter)
+
+    let isomorph f f_inv nfa =
+      { init  = f nfa.init;
+        final = QS.map f nfa.final;
+        step  = fun q a -> QS.map f (nfa.step (f_inv q) a)
+      }
   end
 end
