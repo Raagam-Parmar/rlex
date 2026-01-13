@@ -205,7 +205,7 @@ struct
       iso f f_inv nfa
 
     let union nfa1 nfa2 =
-      if nfa1.alpha <> nfa2.alpha then
+      if AS.compare nfa1.alpha nfa2.alpha <> 0 then
         Error (AlphaMismatch (nfa1.alpha, nfa2.alpha))
       else
         let n1 = cardinal nfa1 in
@@ -228,6 +228,35 @@ struct
                   nfa1.step q s
 
                 else if n1 + 1 <= q && q <= n1 + n2 then
+                  nfa2.step q s
+
+                else QS.empty
+          }
+
+    let concat nfa1 nfa2 =
+      if AS.compare nfa1.alpha nfa2.alpha <> 0 then
+        Error (AlphaMismatch (nfa1.alpha, nfa2.alpha))
+      else
+        let n1 = cardinal nfa1 in
+        let n2 = cardinal nfa2 in
+        let nfa1 = iso_n nfa1 0 in
+        let nfa2 = iso_n nfa2 n1 in
+        Ok
+          { states = QS.union nfa1.states nfa2.states;
+            init   = nfa1.init;
+            alpha  = nfa1.alpha;
+            final  = nfa2.final;
+            step   =
+              fun q s ->
+                if QS.mem q nfa1.final then
+                  match s with
+                  | Eps -> nfa1.step q s |> QS.add nfa1.init
+                  | Sym _ -> nfa1.step q s
+
+                else if 0 <= q && q <= n1 - 1 then
+                  nfa1.step q s
+
+                else if n1 <= q && q <= n2 - 1 then
                   nfa2.step q s
 
                 else QS.empty
