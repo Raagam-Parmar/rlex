@@ -296,5 +296,13 @@ struct
 
             else QS.empty
       }
+
+    let complement nfa =
+      { states = nfa.states;
+        init   = nfa.init;
+        alpha  = nfa.alpha;
+        final  = QS.diff nfa.states nfa.final;
+        step   = nfa.step
+      }
   end
 end
