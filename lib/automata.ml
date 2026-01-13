@@ -261,5 +261,30 @@ struct
 
                 else QS.empty
           }
+
+    let kstar nfa =
+      let n = cardinal nfa in
+      let nfa = iso_n nfa 1 in
+      { states = QS.add 0 nfa.states;
+        init   = 0;
+        alpha  = nfa.alpha;
+        final  = QS.singleton 0;
+        step   =
+          fun q s ->
+            if q = 0 then
+              match s with
+              | Eps   -> QS.singleton nfa.init
+              | Sym _ -> QS.empty
+
+            else if QS.mem q nfa.final then
+              match s with
+              | Eps   -> nfa.step q s |> QS.add 0
+              | Sym _ -> nfa.step q s
+
+            else if 0 <= q && q <= n - 1 then
+              nfa.step q s
+
+            else QS.empty
+      }
   end
 end
