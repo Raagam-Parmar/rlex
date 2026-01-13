@@ -52,7 +52,7 @@ struct
 
     let step nfa = nfa.step
 
-    let eps_closure nfa (s : QS.t) =
+    let eps_closure nfa qs =
       let rec go t =
         let t' =
           QS.map_union (fun s -> nfa.step s Eps) t in
@@ -61,24 +61,24 @@ struct
         then t
         else go t'
       in
-      go s
+      go qs
 
-    let rec step' nfa (q : Q.t) (str : str) =
+    let rec step' nfa q str =
       match str with
       | []      -> eps_closure nfa (QS.singleton nfa.init)
       | s::str' ->
         let reachable = eps_closure nfa (nfa.step q (Sym s)) in
         QS.map_union (fun r -> step' nfa r str') reachable
 
-    let accepts nfa (str : str) =
-      let final = step' nfa nfa.init str in
-      let inter = QS.inter final nfa.final in
-      not (QS.is_empty inter)
-
     let isomorph f f_inv nfa =
       { init  = f nfa.init;
         final = QS.map f nfa.final;
         step  = fun q a -> QS.map f (nfa.step (f_inv q) a)
       }
+
+    let accepts nfa str =
+      let final = step' nfa nfa.init str in
+      let inter = QS.inter final nfa.final in
+      not (QS.is_empty inter)
   end
 end
