@@ -94,10 +94,19 @@ struct
       | Eps
 
     type t =
-      { init  : Q.t  ;
+      { states : QS.t;
+        init  : Q.t  ;
+        alpha : AS.t ;
         final : QS.t ;
         step  : Q.t -> ta -> QS.t
       }
+
+    type err =
+      | EmptyStates
+      | EmptyAlpha
+      | InvalidInit of Q.t * QS.t
+      | InvalidFinal of QS.t * QS.t
+      | InvalidStep of Q.t * ta * QS.t * QS.t
 
     let step nfa = nfa.step
 
@@ -119,15 +128,66 @@ struct
         let reachable = eps_closure nfa (nfa.step q (Sym s)) in
         QS.map_union (fun r -> step' nfa r str') reachable
 
-    let isomorph f f_inv nfa =
-      { init  = f nfa.init;
-        final = QS.map f nfa.final;
-        step  = fun q a -> QS.map f (nfa.step (f_inv q) a)
-      }
+    let step_table states alpha step  =
+      let neighbours q =
+        AS.to_list alpha
+        |> List.map (fun a -> Sym a)
+        |> List.cons Eps
+        |> List.map (fun a -> (q, a, step q a))
+      in
+
+      QS.to_list states
+      |> List.map neighbours
+      |> List.concat
+
+    let mk_nfa states init alpha final step =
+      if QS.is_empty states then
+        Error EmptyStates
+
+      else if AS.is_empty alpha then
+        Error EmptyAlpha
+
+      else if not (QS.mem init states) then
+        Error (InvalidInit (init, states))
+
+      else if not (QS.subset final states) then
+        Error (InvalidFinal (final, states))
+
+      else
+        let table = step_table states alpha step in
+
+        let invalid_trans =
+          List.find_opt
+            (fun (_, _, qs) ->
+               not (QS.is_empty (QS.diff states qs)))
+            table
+        in
+
+        match invalid_trans with
+        | Some (q1, a, qs) ->
+          Error (InvalidStep (q1, a, qs, states))
+        | None ->
+          Ok {
+            states = states;
+            init   = init  ;
+            alpha  = alpha ;
+            final  = final ;
+            step   = step
+          }
 
     let accepts nfa str =
       let final = step' nfa nfa.init str in
       let inter = QS.inter final nfa.final in
       not (QS.is_empty inter)
+
+    let iso f f_inv nfa =
+      { states = nfa.states;
+        init   = f nfa.init;
+        alpha  = nfa.alpha;
+        final  = QS.map f nfa.final;
+        step   = fun q a -> QS.map f (nfa.step (f_inv q) a)
+      }
+
+
   end
 end
