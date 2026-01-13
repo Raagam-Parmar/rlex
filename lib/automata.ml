@@ -40,6 +40,16 @@ struct
     let step' dfa (q : Q.t) (str : str) =
       List.fold_left dfa.step q str
 
+    let step_table states alpha step  =
+      let neighbours q =
+        AS.to_list alpha
+        |> List.map (fun a -> (q, a, step q a))
+      in
+
+      QS.to_list states
+      |> List.map neighbours
+      |> List.concat
+
     let accepts dfa (str : str) =
       let final = step' dfa dfa.init str in
       QS.mem final dfa.final
@@ -47,38 +57,34 @@ struct
     let mk_dfa states init alpha final step =
       if QS.is_empty states then
         Error EmptyStates
+
       else if AS.is_empty alpha then
         Error EmptyAlpha
+
       else if not (QS.mem init states) then
         Error (InvalidInit (init, states))
+
       else if not (QS.subset final states) then
         Error (InvalidFinal (final, states))
+
       else
-        let neighbours q =
-        AS.to_list alpha
-        |> List.map (fun a -> (q, a, step q a))
-      in
+        let table = step_table states alpha step in
 
-      let reachables =
-        QS.to_list states
-        |> List.map neighbours
-        |> List.concat
-      in
+        let invalid_trans =
+          List.find_opt (fun (_, _, q) -> QS.mem q states) table
+        in
 
-      let invalid_trans =
-        List.find_opt (fun (_, _, q) -> QS.mem q states) reachables
-      in
-
-      match invalid_trans with
-      | Some (q1, a, q2) -> Error (InvalidStep (q1, a, q2, states))
-      | None ->
-        Ok {
-          states = states;
-          init   = init  ;
-          alpha  = alpha ;
-          final  = final ;
-          step   = step
-        }
+        match invalid_trans with
+        | Some (q1, a, q2) ->
+          Error (InvalidStep (q1, a, q2, states))
+        | None ->
+          Ok {
+            states = states;
+            init   = init  ;
+            alpha  = alpha ;
+            final  = final ;
+            step   = step
+          }
   end
 
   module NFA =
