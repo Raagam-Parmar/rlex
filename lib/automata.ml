@@ -50,6 +50,7 @@ struct
       |> List.map neighbours
       |> List.concat
 
+    (* TODO Do the same thing here *)
     let accepts dfa (str : str) =
       let final = step' dfa dfa.init str in
       QS.mem final dfa.final
@@ -107,6 +108,7 @@ struct
       | InvalidInit of Q.t * QS.t
       | InvalidFinal of QS.t * QS.t
       | InvalidStep of Q.t * ta * QS.t * QS.t
+      | AlphaMismatch of AS.t * AS.t
 
     let step nfa = nfa.step
 
@@ -127,6 +129,13 @@ struct
       | s::str' ->
         let reachable = eps_closure nfa (nfa.step q (Sym s)) in
         QS.map_union (fun r -> step' nfa r str') reachable
+
+    let accepts nfa str =
+      let final = step' nfa nfa.init str in
+      let inter = QS.inter final nfa.final in
+      not (QS.is_empty inter)
+
+    let cardinal nfa = QS.cardinal nfa.states
 
     let step_table states alpha step  =
       let neighbours q =
@@ -175,11 +184,6 @@ struct
             step   = step
           }
 
-    let accepts nfa str =
-      let final = step' nfa nfa.init str in
-      let inter = QS.inter final nfa.final in
-      not (QS.is_empty inter)
-
     let iso f f_inv nfa =
       { states = nfa.states;
         init   = f nfa.init;
@@ -188,6 +192,45 @@ struct
         step   = fun q a -> QS.map f (nfa.step (f_inv q) a)
       }
 
+    let iso_n nfa n =
+      let sl = QS.to_list nfa.states in
+      let f q =
+        List.find_index ((=) q) sl
+        |> Option.get
+        |> (+) n
+      in
+      let f_inv q =
+        List.nth sl (q - n)
+      in
+      iso f f_inv nfa
 
+    let union nfa1 nfa2 =
+      if nfa1.alpha <> nfa2.alpha then
+        Error (AlphaMismatch (nfa1.alpha, nfa2.alpha))
+      else
+        let n1 = cardinal nfa1 in
+        let n2 = cardinal nfa2 in
+        let nfa1 = iso_n nfa1 1 in
+        let nfa2 = iso_n nfa2 (n1 + 1) in
+        Ok
+          { states = QS.union nfa1.states nfa2.states |> QS.add 0;
+            init   = 0;
+            alpha  = nfa1.alpha;
+            final  = QS.union nfa1.final nfa2.final;
+            step   =
+              fun q s ->
+                if q = 0 then
+                  match s with
+                  | Eps   -> QS.of_list [nfa1.init; nfa2.init]
+                  | Sym _ -> QS.empty
+
+                else if 1 <= q && q <= n1 then
+                  nfa1.step q s
+
+                else if n1 + 1 <= q && q <= n1 + n2 then
+                  nfa2.step q s
+
+                else QS.empty
+          }
   end
 end
