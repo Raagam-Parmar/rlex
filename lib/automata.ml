@@ -29,6 +29,7 @@ struct
       }
 
     type err =
+      | InvalidString of str * AS.t
       | EmptyStates
       | EmptyAlpha
       | InvalidInit of Q.t * QS.t
@@ -50,10 +51,14 @@ struct
       |> List.map neighbours
       |> List.concat
 
-    (* TODO Do the same thing here *)
-    let accepts dfa (str : str) =
-      let final = step' dfa dfa.init str in
-      QS.mem final dfa.final
+    let accepts dfa (str:str) =
+      let valid = List.for_all (fun s -> AS.mem s dfa.alpha) str in
+      if not valid then
+        Error (InvalidString (str, dfa.alpha))
+      else
+        let final = step' dfa dfa.init str in
+        Ok (QS.mem final dfa.final)
+
 
     let mk_dfa states init alpha final step =
       if QS.is_empty states then
@@ -103,6 +108,7 @@ struct
       }
 
     type err =
+      | InvalidString of str * AS.t
       | EmptyStates
       | EmptyAlpha
       | InvalidInit of Q.t * QS.t
@@ -131,9 +137,13 @@ struct
         QS.map_union (fun r -> step' nfa r str') reachable
 
     let accepts nfa str =
-      let final = step' nfa nfa.init str in
-      let inter = QS.inter final nfa.final in
-      not (QS.is_empty inter)
+      let valid = List.for_all (fun s -> AS.mem s nfa.alpha) str in
+      if not valid then
+        Error (InvalidString (str, nfa.alpha))
+      else
+        let final = step' nfa nfa.init str in
+        let inter = QS.inter final nfa.final in
+        Ok (not (QS.is_empty inter))
 
     let cardinal nfa = QS.cardinal nfa.states
 
