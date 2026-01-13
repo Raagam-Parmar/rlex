@@ -21,9 +21,9 @@ struct
   module DFA =
   struct
     type t =
-      { states : QS.t ;
+      { (* states : QS.t ; *)
+        (* alpha  : AS.t ; *)
         init   : Q.t  ;
-        alpha  : AS.t ;
         final  : QS.t ;
         step   : Q.t -> A.t -> Q.t
       }
