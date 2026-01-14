@@ -120,6 +120,18 @@ struct
       in
       Ok (go q str)
 
+  let step_tbl states alpha step  =
+    let neighbours q =
+      AS.to_list alpha
+      |> List.map (fun a -> Sym a)
+      |> List.cons Eps
+      |> List.map (fun a -> (q, a, step q a))
+    in
+
+    QS.to_list states
+    |> List.map neighbours
+    |> List.concat
+
   let accepts nfa str =
     let valid = List.for_all (fun s -> AS.mem s nfa.alpha) str in
     if not valid then
@@ -129,53 +141,59 @@ struct
       let inter = QS.inter final nfa.final in
       Ok (not (QS.is_empty inter))
 
+  let chk_states nfa =
+    if QS.is_empty nfa.states
+    then Error EmptyStates
+    else Ok nfa
 
-  let step_table states alpha step  =
-     let neighbours q =
-      AS.to_list alpha
-      |> List.map (fun a -> Sym a)
-      |> List.cons Eps
-      |> List.map (fun a -> (q, a, step q a))
-     in
+  let chk_init nfa =
+    if not (QS.mem nfa.init nfa.states)
+    then Error InvalidInit
+    else Ok nfa
 
-     QS.to_list states
-     |> List.map neighbours
-     |> List.concat
+  let chk_alpha nfa =
+    if AS.is_empty nfa.alpha
+    then Error EmptyAlpha
+    else Ok nfa
 
-  let mk_nfa states init alpha final step =
-    if QS.is_empty states then
-      Error EmptyStates
+  let chk_final nfa =
+    if not (QS.subset nfa.final nfa.states)
+    then  Error InvalidFinal
+    else Ok nfa
 
-    else if AS.is_empty alpha then
-      Error EmptyAlpha
+  let chk_step nfa =
+    let symbol_l =
+      AS.to_list nfa.alpha
+      |> List.map (fun s -> Sym s)
+    in
+    let invalid =
+      nfa.states
+      |> QS.exists (fun q ->
+          List.exists (fun a ->
+              let ps = nfa.step q a in
+              not (QS.is_empty (QS.diff nfa.states ps))
+            ) symbol_l
+        )
+    in
+    if invalid
+    then Error InvalidStep
+    else Ok nfa
 
-    else if not (QS.mem init states) then
-      Error InvalidInit
+  let chk_nfa nfa =
+    let* nfa = chk_states nfa in
+    let* nfa = chk_init   nfa in
+    let* nfa = chk_alpha  nfa in
+    let* nfa = chk_final  nfa in
+    chk_step nfa
 
-    else if not (QS.subset final states) then
-      Error InvalidFinal
-
-    else
-      let table = step_table states alpha step in
-
-      let invalid_trans =
-        List.find_opt
-          (fun (_, _, qs) ->
-             not (QS.is_empty (QS.diff states qs)))
-          table
-      in
-
-      match invalid_trans with
-      | Some (_, _, _) ->
-        Error InvalidStep
-      | None ->
-        Ok {
-          states = states;
-          init   = init  ;
-          alpha  = alpha ;
-          final  = final ;
-          step   = step
-        }
+  let mk_nfa ~states ~init ~alpha ~final ~step =
+    chk_nfa
+      { states = QS.of_list states;
+        init   = init;
+        alpha  = AS.of_list alpha;
+        final  = QS.of_list final;
+        step   = step
+      }
 
   let iso f f_inv nfa =
     { states = nfa.states;
