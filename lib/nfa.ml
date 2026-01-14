@@ -77,6 +77,12 @@ struct
     | InvalidStep
     | AlphaMismatch
 
+  let states nfa = nfa.states
+  let init nfa = nfa.init
+  let alpha nfa = nfa.alpha
+  let final nfa = nfa.final
+  let cardinal nfa = QS.cardinal nfa.states
+
   let step nfa q s =
     if not (AS.mem s nfa.alpha)
     then Error InvalidChar
@@ -111,8 +117,8 @@ struct
           let p = nfa.step q (Sym s) in
           let reachable = closure nfa p in
           QS.map_union (fun r -> go r str') reachable
-        in
-        Ok (go q str)
+      in
+      Ok (go q str)
 
   let accepts nfa str =
     let valid = List.for_all (fun s -> AS.mem s nfa.alpha) str in
@@ -123,19 +129,18 @@ struct
       let inter = QS.inter final nfa.final in
       Ok (not (QS.is_empty inter))
 
-  let cardinal nfa = QS.cardinal nfa.states
 
   let step_table states alpha step  =
-    let neighbours q =
+     let neighbours q =
       AS.to_list alpha
       |> List.map (fun a -> Sym a)
       |> List.cons Eps
       |> List.map (fun a -> (q, a, step q a))
-    in
+     in
 
-    QS.to_list states
-    |> List.map neighbours
-    |> List.concat
+     QS.to_list states
+     |> List.map neighbours
+     |> List.concat
 
   let mk_nfa states init alpha final step =
     if QS.is_empty states then
