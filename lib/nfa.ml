@@ -37,7 +37,7 @@ sig
   val states  : t -> qset
   val init    : t -> q
   val alpha   : t -> sset
-  val step    : t -> q -> ts -> (qset, err) Result.t
+  val step    : t -> q -> s -> (qset, err) Result.t
   val step'   : t -> q -> s list -> (qset, err) Result.t
   val accepts : t -> s list -> (bool, err) Result.t
 end
@@ -77,7 +77,10 @@ struct
     | InvalidStep
     | AlphaMismatch
 
-  let step nfa = nfa.step
+  let step nfa q s =
+    if not (AS.mem s nfa.alpha)
+    then Error InvalidChar
+    else Ok (nfa.step q (Sym s))
 
   let eps_closure nfa qs =
     let rec go t =
