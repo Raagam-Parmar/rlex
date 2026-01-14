@@ -1,3 +1,5 @@
+open Patterns
+
 module Alpha =
 struct
   type t =
@@ -26,7 +28,12 @@ module NfaChar = Nfa.Make(Alpha)
 module SetInt = Set.Make(Int)
 module SetAlpha = Set.Make(Alpha)
 
-exception UnepectedError of string
+exception UnexpectedError of string
+
+let unpack e str =
+  match e with
+  | Error _ -> raise (UnexpectedError str)
+  | Ok r -> r
 
 let all_symbols =
   List.init 257 (fun i -> i)
@@ -42,10 +49,7 @@ let accept_null =
       ~final:SetInt.empty
       ~step:(fun _ _ -> SetInt.empty)
   in
-  match n with
-  | Error _ ->
-    raise (UnepectedError "Compile.accept_null : unexpected faliure")
-  | Ok n -> n
+  unpack n "Matcher.accept_null : unexpected failure"
 
 let accept_eps =
   let n =
@@ -56,10 +60,7 @@ let accept_eps =
       ~final:(SetInt.singleton 0)
       ~step:(fun _ _ -> SetInt.empty)
   in
-  match n with
-  | Error _ ->
-    raise (UnepectedError "Compile.accept_eps : unexpected faliure")
-  | Ok n -> n
+  unpack n "Matcher.accept_eps : unexpected failure"
 
 let accept_chr c =
   let n =
@@ -71,14 +72,11 @@ let accept_chr c =
       ~step:
         (fun q s ->
            if q = 0 then
-             if NfaChar.cmp_ts s c = 0
+             if NfaChar.cmp_ts s (NfaChar.Sym c) = 0
              then SetInt.singleton 1
              else SetInt.empty
            else
              SetInt.empty
         )
   in
-  match n with
-  | Error _ ->
-    raise (UnepectedError "Compile.accept_eps : unexpected faliure")
-  | Ok n -> n
+  unpack n "Matcher.accept_chr : unexpected failure"
