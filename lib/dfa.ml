@@ -4,18 +4,15 @@ sig
   val compare : t -> t -> int
 end
 
-module type STATE_TYPE =
-sig
-  type t
-  val compare : t -> t -> int
-end
-
 module type DFA_TYPE =
 sig
   type t
 
-  type s
   type q
+  type qset
+
+  type s
+  type sset
 
   type err =
     | InvalidChar
@@ -26,17 +23,17 @@ sig
     | InvalidStep
 
   val mk_dfa :
-    states   : q list
+    states   : qset
     -> init  : q
-    -> alpha : s list
-    -> final : q list
+    -> alpha : sset
+    -> final : qset
     -> step  : (q -> s -> q)
     -> (t, err) Result.t
 
-  val states  : t -> q list
+  val states  : t -> qset
   val init    : t -> q
-  val alpha   : t -> s list
-  val final   : t -> q list
+  val alpha   : t -> sset
+  val final   : t -> qset
   val step    : t -> q -> s -> (q, err) Result.t
   val step'   : t -> q -> s list -> (q, err) Result.t
   val accepts : t -> s list -> (bool, err) Result.t
@@ -44,22 +41,26 @@ end
 
 module Make
     (A : ALPHABET_TYPE)
-    (Q : STATE_TYPE)
   : DFA_TYPE =
 struct
   module AS = Setutils.Make(A)
-  module QS = Setutils.Make(Q)
 
-  type s = A.t
-  type q = Q.t
+  type s    = A.t
+  type sset = AS.t
   type str = s list
 
+  module Q  = Int
+  module QS = Setutils.Make(Q)
+
+  type q    = Q.t
+  type qset = QS.t
+
   type t =
-    { states : QS.t ;
-      init   : Q.t  ;
-      alpha  : AS.t ;
-      final  : QS.t ;
-      step   : Q.t -> A.t -> Q.t
+    { states : qset ;
+      init   : q    ;
+      alpha  : sset ;
+      final  : qset ;
+      step   : q -> s -> q
     }
 
   type err =
@@ -71,10 +72,11 @@ struct
     | InvalidStep
 
 
-  let states dfa = QS.to_list dfa.states
+  let states dfa = dfa.states
   let init dfa = dfa.init
-  let alpha dfa = AS.to_list dfa.alpha
-  let final dfa = QS.to_list dfa.final
+  let alpha dfa = dfa.alpha
+  let final dfa = dfa.final
+  let cardinal dfa = QS.cardinal dfa.states
 
   let step dfa q s =
     if not (AS.mem s dfa.alpha) then
@@ -154,10 +156,10 @@ struct
 
   let mk_dfa ~states ~init ~alpha ~final ~step =
     chk_dfa
-      { states = QS.of_list states;
+      { states = states;
         init   = init;
-        alpha  = AS.of_list alpha;
-        final  = QS.of_list final;
+        alpha  = alpha;
+        final  = final;
         step   = step
       }
 end
