@@ -1,12 +1,48 @@
-module type SymbolType =
+module type ALPHABET_TYPE =
 sig
   type t
   val compare: t -> t -> int
 end
 
-module type DFAType =
+module type STATE_TYPE =
 sig
   type t
+  val compare : t -> t -> int
+end
+
+module type NFA_TYPE =
+sig
+  type t
+
+  type s
+  type q
+
+  type ts =
+    | Sym of s
+    | Eps
+
+  type err =
+    | InvalidString
+    | EmptyStates
+    | EmptyAlpha
+    | InvalidInit
+    | InvalidFinal
+    | InvalidStep
+
+  val mk_nfa :
+    stats    : q list
+    -> init  : q
+    -> alpha : s list
+    -> final : q list
+    -> step  : (q -> ts -> q list)
+    -> (t, err) Result.t
+
+  val states  : t -> q list
+  val init    : t -> q
+  val alpha   : t -> s list
+  val step    : t -> q -> ts -> (q, err) Result.t
+  val step'   : t -> q -> s list -> (q, err) Result.t
+  val accepts : t -> s list -> (bool, err) Result.t
 end
 
 module Make (A : SymbolType) =
