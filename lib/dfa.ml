@@ -36,7 +36,11 @@ sig
   val final   : t -> qset
   val step    : t -> q -> s -> (q, err) Result.t
   val step'   : t -> q -> s list -> (q, err) Result.t
+  val step_tbl : t -> (q * s * q) list
+
   val accepts : t -> s list -> (bool, err) Result.t
+
+  val cardinal : t -> int
 end
 
 module Make
@@ -47,7 +51,6 @@ struct
 
   type s    = A.t
   type sset = AS.t
-  type str = s list
 
   module Q  = Int
   module QS = Setutils.Make(Q)

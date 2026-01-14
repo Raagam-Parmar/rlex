@@ -38,12 +38,19 @@ sig
   val states  : t -> qset
   val init    : t -> q
   val alpha   : t -> sset
+  val final   : t -> qset
   val step    : t -> q -> s -> (qset, err) Result.t
   val step'   : t -> q -> s list -> (qset, err) Result.t
   val step_tbl : t -> (q * ts * qset) list
   val accepts : t -> s list -> (bool, err) Result.t
 
   val closure : t -> qset -> qset
+  val cardinal : t -> int
+
+  val union : t -> t -> (t, err) Result.t
+  val concat : t -> t -> (t, err) Result.t
+  val kstar : t -> t
+  val complement : t -> t
 end
 
 module Make
@@ -54,7 +61,6 @@ struct
 
   type s    = A.t
   type sset = AS.t
-  type str  = s list
 
   type ts =
     | Sym of s
