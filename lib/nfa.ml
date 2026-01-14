@@ -132,7 +132,7 @@ struct
     else
       let rec go q str =
         match str with
-        | []        -> closure nfa (QS.singleton nfa.init)
+        | []        -> closure nfa (QS.singleton q)
         | s :: str' ->
           let p = nfa.step q (Sym s) in
           let reachable = closure nfa p in
