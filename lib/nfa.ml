@@ -82,7 +82,7 @@ struct
     then Error InvalidChar
     else Ok (nfa.step q (Sym s))
 
-  let eps_closure nfa qs =
+  let closure nfa qs =
     let rec go t =
       let t' =
         QS.map_union (fun s -> nfa.step s Eps) t in
@@ -93,19 +93,33 @@ struct
     in
     go qs
 
-  let rec step' nfa q str =
-    match str with
-    | []      -> eps_closure nfa (QS.singleton nfa.init)
-    | s::str' ->
-      let reachable = eps_closure nfa (nfa.step q (Sym s)) in
-      QS.map_union (fun r -> step' nfa r str') reachable
+  let ( let* ) = Result.bind
+
+  let step' nfa q str =
+    let valid =
+      List.for_all
+        (fun s -> AS.mem s nfa.alpha)
+        str
+    in
+    if not valid
+    then Error InvalidChar
+    else
+      let rec go q str =
+        match str with
+        | []        -> closure nfa (QS.singleton nfa.init)
+        | s :: str' ->
+          let p = nfa.step q (Sym s) in
+          let reachable = closure nfa p in
+          QS.map_union (fun r -> go r str') reachable
+        in
+        Ok (go q str)
 
   let accepts nfa str =
     let valid = List.for_all (fun s -> AS.mem s nfa.alpha) str in
     if not valid then
       Error InvalidChar
     else
-      let final = step' nfa nfa.init str in
+      let* final = step' nfa nfa.init str in
       let inter = QS.inter final nfa.final in
       Ok (not (QS.is_empty inter))
 
