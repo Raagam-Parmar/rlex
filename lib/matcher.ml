@@ -26,3 +26,23 @@ module NfaChar = Nfa.Make(Alpha)
 module SetInt = Set.Make(Int)
 module SetAlpha = Set.Make(Alpha)
 
+exception UnepectedError of string
+
+let all_symbols =
+  List.init 257 (fun i -> i)
+  |> List.map Alpha.chr
+  |> SetAlpha.of_list
+
+let accept_null =
+  let n =
+    NfaChar.mk_nfa
+      ~states:(SetInt.singleton 0)
+      ~init:0
+      ~alpha:all_symbols
+      ~final:SetInt.empty
+      ~step:(fun _ _ -> SetInt.empty)
+  in
+  match n with
+  | Error _ ->
+    raise (UnepectedError "Compile.accept_null : unexpected faliure")
+  | Ok n -> n
