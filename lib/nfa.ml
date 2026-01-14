@@ -54,8 +54,7 @@ sig
 end
 
 module Make
-    (A : ALPHABET_TYPE)
-  : NFA_TYPE =
+    (A : ALPHABET_TYPE) =
 struct
   module AS = Setutils.Make(A)
 
