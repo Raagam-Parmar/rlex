@@ -36,3 +36,13 @@ let str =
 let plus p = concat p (star p)
 
 let opt p = union p eps
+
+module Infix =
+struct
+  let ( + ) = union
+  let ( ^ ) = concat
+  let ( * ) = star
+  let ( ! ) = compl
+  let ( & ) = inter
+  let ( - ) = diff
+end
