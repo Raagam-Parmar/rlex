@@ -18,6 +18,8 @@ sig
     | Sym of s
     | Eps
 
+  val cmp_ts : ts -> ts -> int
+
   type err =
     | InvalidChar
     | EmptyStates
@@ -64,6 +66,13 @@ struct
   type ts =
     | Sym of s
     | Eps
+
+  let cmp_ts s1 s2 =
+    match s1, s2 with
+    | Sym s1, Sym s2 -> A.compare s1 s2
+    | Sym _ , Eps    -> 1
+    | Eps   , Sym _  -> -1
+    | Eps   , Eps    -> 0
 
   module Q  = Int
   module QS = Setutils.Make(Q)

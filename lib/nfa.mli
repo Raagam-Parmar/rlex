@@ -15,6 +15,8 @@ module type NFA_TYPE = sig
     | Sym of s
     | Eps
 
+  val cmp_ts : ts -> ts -> int
+
   type err =
     | InvalidChar
     | EmptyStates
