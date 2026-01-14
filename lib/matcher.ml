@@ -1,4 +1,4 @@
-open Patterns
+open Pattern
 
 module Alpha =
 struct
