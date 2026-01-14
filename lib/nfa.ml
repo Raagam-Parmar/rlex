@@ -25,9 +25,10 @@ sig
     | InvalidInit
     | InvalidFinal
     | InvalidStep
+    | AlphaMismatch
 
   val mk_nfa :
-    stats    : qset
+    states    : qset
     -> init  : q
     -> alpha : sset
     -> final : qset
@@ -39,10 +40,15 @@ sig
   val alpha   : t -> sset
   val step    : t -> q -> s -> (qset, err) Result.t
   val step'   : t -> q -> s list -> (qset, err) Result.t
+  val step_tbl : t -> (q * ts * qset) list
   val accepts : t -> s list -> (bool, err) Result.t
+
+  val closure : t -> qset -> qset
 end
 
-module Make (A : ALPHABET_TYPE) =
+module Make
+    (A : ALPHABET_TYPE)
+  : NFA_TYPE =
 struct
   module AS = Setutils.Make(A)
 
@@ -50,22 +56,22 @@ struct
   type sset = AS.t
   type str  = s list
 
+  type ts =
+    | Sym of s
+    | Eps
+
   module Q  = Int
   module QS = Setutils.Make(Q)
 
   type q    = Q.t
   type qset = QS.t
 
-  type ta =
-    | Sym of s
-    | Eps
-
   type t =
     { states : qset ;
       init   : q    ;
       alpha  : sset ;
       final  : qset ;
-      step   : q -> ta -> qset
+      step   : q -> ts -> qset
     }
 
   type err =
@@ -120,15 +126,15 @@ struct
       in
       Ok (go q str)
 
-  let step_tbl states alpha step  =
+  let step_tbl nfa  =
     let neighbours q =
-      AS.to_list alpha
+      AS.to_list nfa.alpha
       |> List.map (fun a -> Sym a)
       |> List.cons Eps
-      |> List.map (fun a -> (q, a, step q a))
+      |> List.map (fun a -> (q, a, nfa.step q a))
     in
 
-    QS.to_list states
+    QS.to_list nfa.states
     |> List.map neighbours
     |> List.concat
 
@@ -188,10 +194,10 @@ struct
 
   let mk_nfa ~states ~init ~alpha ~final ~step =
     chk_nfa
-      { states = QS.of_list states;
+      { states = states;
         init   = init;
-        alpha  = AS.of_list alpha;
-        final  = QS.of_list final;
+        alpha  = alpha;
+        final  = final;
         step   = step
       }
 
