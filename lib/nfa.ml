@@ -191,7 +191,7 @@ struct
       |> QS.exists (fun q ->
           List.exists (fun a ->
               let ps = nfa.step q a in
-              not (QS.is_empty (QS.diff nfa.states ps))
+              QS.is_empty (QS.diff nfa.states ps)
             ) symbol_l
         )
     in
