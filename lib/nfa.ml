@@ -4,25 +4,22 @@ sig
   val compare: t -> t -> int
 end
 
-module type STATE_TYPE =
-sig
-  type t
-  val compare : t -> t -> int
-end
-
 module type NFA_TYPE =
 sig
   type t
 
-  type s
   type q
+  type qset
+
+  type s
+  type sset
 
   type ts =
     | Sym of s
     | Eps
 
   type err =
-    | InvalidString
+    | InvalidChar
     | EmptyStates
     | EmptyAlpha
     | InvalidInit
@@ -30,50 +27,55 @@ sig
     | InvalidStep
 
   val mk_nfa :
-    stats    : q list
+    stats    : qset
     -> init  : q
-    -> alpha : s list
-    -> final : q list
-    -> step  : (q -> ts -> q list)
+    -> alpha : sset
+    -> final : qset
+    -> step  : (q -> ts -> qset)
     -> (t, err) Result.t
 
-  val states  : t -> q list
+  val states  : t -> qset
   val init    : t -> q
-  val alpha   : t -> s list
-  val step    : t -> q -> ts -> (q, err) Result.t
-  val step'   : t -> q -> s list -> (q, err) Result.t
+  val alpha   : t -> sset
+  val step    : t -> q -> ts -> (qset, err) Result.t
+  val step'   : t -> q -> s list -> (qset, err) Result.t
   val accepts : t -> s list -> (bool, err) Result.t
 end
 
-module Make (A : SymbolType) =
+module Make (A : ALPHABET_TYPE) =
 struct
   module AS = Setutils.Make(A)
+
+  type s    = A.t
+  type sset = AS.t
+  type str  = s list
+
   module Q  = Int
   module QS = Setutils.Make(Q)
 
-  type chr = A.t
-  type str = chr list
+  type q    = Q.t
+  type qset = QS.t
 
   type ta =
-    | Sym of A.t
+    | Sym of s
     | Eps
 
   type t =
-    { states : QS.t;
-      init  : Q.t  ;
-      alpha : AS.t ;
-      final : QS.t ;
-      step  : Q.t -> ta -> QS.t
+    { states : qset ;
+      init   : q    ;
+      alpha  : sset ;
+      final  : qset ;
+      step   : q -> ta -> qset
     }
 
   type err =
-    | InvalidString of str * AS.t
+    | InvalidChar
     | EmptyStates
     | EmptyAlpha
-    | InvalidInit of Q.t * QS.t
-    | InvalidFinal of QS.t * QS.t
-    | InvalidStep of Q.t * ta * QS.t * QS.t
-    | AlphaMismatch of AS.t * AS.t
+    | InvalidInit
+    | InvalidFinal
+    | InvalidStep
+    | AlphaMismatch
 
   let step nfa = nfa.step
 
@@ -98,7 +100,7 @@ struct
   let accepts nfa str =
     let valid = List.for_all (fun s -> AS.mem s nfa.alpha) str in
     if not valid then
-      Error (InvalidString (str, nfa.alpha))
+      Error InvalidChar
     else
       let final = step' nfa nfa.init str in
       let inter = QS.inter final nfa.final in
@@ -126,10 +128,10 @@ struct
       Error EmptyAlpha
 
     else if not (QS.mem init states) then
-      Error (InvalidInit (init, states))
+      Error InvalidInit
 
     else if not (QS.subset final states) then
-      Error (InvalidFinal (final, states))
+      Error InvalidFinal
 
     else
       let table = step_table states alpha step in
@@ -142,8 +144,8 @@ struct
       in
 
       match invalid_trans with
-      | Some (q1, a, qs) ->
-        Error (InvalidStep (q1, a, qs, states))
+      | Some (_, _, _) ->
+        Error InvalidStep
       | None ->
         Ok {
           states = states;
@@ -175,7 +177,7 @@ struct
 
   let union nfa1 nfa2 =
     if AS.compare nfa1.alpha nfa2.alpha <> 0 then
-      Error (AlphaMismatch (nfa1.alpha, nfa2.alpha))
+      Error AlphaMismatch
     else
       let n1 = cardinal nfa1 in
       let n2 = cardinal nfa2 in
@@ -204,7 +206,7 @@ struct
 
   let concat nfa1 nfa2 =
     if AS.compare nfa1.alpha nfa2.alpha <> 0 then
-      Error (AlphaMismatch (nfa1.alpha, nfa2.alpha))
+      Error AlphaMismatch
     else
       let n1 = cardinal nfa1 in
       let n2 = cardinal nfa2 in
