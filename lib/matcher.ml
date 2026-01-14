@@ -80,3 +80,29 @@ let accept_chr c =
         )
   in
   unpack n "Matcher.accept_chr : unexpected failure"
+
+let rec matcher p =
+  match p with
+  | PNull -> accept_null
+  | PEps -> accept_eps
+  | PEof -> accept_chr Alpha.Eof
+  | PChr c -> accept_chr (Alpha.Chr c)
+  | PUnion (p1, p2) ->
+    let n1 = matcher p1 in
+    let n2 = matcher p2 in
+    let n = NfaChar.union n1 n2 in
+    unpack n "Matcher.matcher : unexpected failure, union"
+
+  | PConcat (p1, p2) ->
+    let n1 = matcher p1 in
+    let n2 = matcher p2 in
+    let n = NfaChar.concat n1 n2 in
+    unpack n "Matcher.matcher : unexpected failure, concat"
+
+  | PStar p ->
+    let n = matcher p in
+    NfaChar.kstar n
+
+  | PCompl p ->
+    let n = matcher p in
+    NfaChar.complement n
