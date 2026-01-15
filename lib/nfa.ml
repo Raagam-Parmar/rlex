@@ -54,7 +54,6 @@ sig
   val union : t -> t -> (t, err) Result.t
   val concat : t -> t -> (t, err) Result.t
   val kstar : t -> t
-  val complement : t -> t
 end
 
 module Make
@@ -331,13 +330,5 @@ struct
             nfa.step q s
 
           else QS.empty
-    }
-
-  let complement nfa =
-    { states = nfa.states;
-      init   = nfa.init;
-      alpha  = nfa.alpha;
-      final  = QS.diff nfa.states nfa.final;
-      step   = nfa.step
     }
 end

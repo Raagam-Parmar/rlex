@@ -106,10 +106,6 @@ let rec matcher p =
     let n = matcher p in
     NfaChar.kstar n
 
-  | PCompl p ->
-    let n = matcher p in
-    NfaChar.complement n
-
 let accepts n str =
   Alpha.of_string str
   |> NfaChar.accepts n

@@ -6,7 +6,6 @@ type pattern =
   | PUnion  of pattern * pattern
   | PConcat of pattern * pattern
   | PStar   of pattern
-  | PCompl  of pattern
 
 let null = PNull
 let eps = PEps
@@ -15,9 +14,6 @@ let chr c = PChr c
 let union p1 p2 = PUnion (p1, p2)
 let concat p1 p2 = PConcat (p1, p2)
 let star p = PStar p
-let compl p = PCompl p
-let inter p1 p2 = union (compl p1) (compl p2)
-let diff p1 p2 = inter p1 (compl p2)
 
 let chr_range c1 c2 =
   let cc1 = Char.code c1 in
@@ -44,11 +40,8 @@ module Infix =
 struct
   let ( <|> ) = union
   let ( <^> ) = concat
-  let ( <&> ) = inter
-  let ( <-> ) = diff
 
   let ( !* ) = star
   let ( !+ ) = plus
   let ( !? ) = opt
-  let ( !/ ) = compl
 end

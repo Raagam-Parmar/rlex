@@ -49,7 +49,6 @@ module type NFA_TYPE = sig
   val union : t -> t -> (t, err) Result.t
   val concat : t -> t -> (t, err) Result.t
   val kstar : t -> t
-  val complement : t -> t
 end
 
 module Make (A : ALPHABET_TYPE) :
