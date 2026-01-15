@@ -42,10 +42,13 @@ let opt p = union p eps
 
 module Infix =
 struct
-  let ( + ) = union
-  let ( ^ ) = concat
-  let ( * ) = star
-  let ( ! ) = compl
-  let ( & ) = inter
-  let ( - ) = diff
+  let ( <|> ) = union
+  let ( <^> ) = concat
+  let ( <&> ) = inter
+  let ( <-> ) = diff
+
+  let ( !* ) = star
+  let ( !+ ) = plus
+  let ( !? ) = opt
+  let ( !/ ) = compl
 end
