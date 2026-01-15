@@ -22,6 +22,9 @@ struct
     if i = 256
     then Eof
     else Chr (Char.chr i)
+
+  let of_string str =
+    String.fold_left (fun sl c -> sl @ [Chr c]) [] str
 end
 
 module NfaChar = Nfa.Make(Alpha)
@@ -106,3 +109,7 @@ let rec matcher p =
   | PCompl p ->
     let n = matcher p in
     NfaChar.complement n
+
+let accepts n str =
+  Alpha.of_string str
+  |> NfaChar.accepts n
