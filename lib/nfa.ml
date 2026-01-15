@@ -290,7 +290,7 @@ struct
               else if 0 <= q && q <= n1 - 1 then
                 nfa1.step q s
 
-              else if n1 <= q && q <= n2 - 1 then
+              else if n1 <= q && q <= n1 + n2 - 1 then
                 nfa2.step q s
 
               else QS.empty
