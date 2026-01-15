@@ -20,8 +20,11 @@ let inter p1 p2 = union (compl p1) (compl p2)
 let diff p1 p2 = inter p1 (compl p2)
 
 let chr_range c1 c2 =
-  let len = Int.abs (Char.code c1 - Char.code c2) in
-  List.init len Char.chr
+  let cc1 = Char.code c1 in
+  let cc2 = Char.code c2 in
+  let smaller = min cc1 cc2 in
+  let len = Int.abs (cc1 - cc2) in
+  List.init len (fun n -> Char.chr (smaller + n))
   |> List.map chr
   |> List.fold_left union null
 
