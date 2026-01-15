@@ -32,7 +32,7 @@ exception UnexpectedError of string
 
 let unpack e str =
   match e with
-  | Error _ -> raise (UnexpectedError str)
+  | Error e -> failwith (str ^ "\n" ^ (NfaChar.fmt_err e))
   | Ok r -> r
 
 let all_symbols =

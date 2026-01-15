@@ -29,6 +29,8 @@ sig
     | InvalidStep
     | AlphaMismatch
 
+  val fmt_err : err -> string
+
   val mk_nfa :
     states    : qset
     -> init  : q
@@ -96,6 +98,16 @@ struct
     | InvalidFinal
     | InvalidStep
     | AlphaMismatch
+
+  let fmt_err e =
+    match e with
+    | InvalidChar -> Printf.sprintf "invalid character"
+    | EmptyStates -> Printf.sprintf "empty state space"
+    | EmptyAlpha -> Printf.sprintf "empty alphabet"
+    | InvalidInit -> Printf.sprintf "invalid init state"
+    | InvalidFinal -> Printf.sprintf "invalid final chk_states"
+    | InvalidStep -> Printf.sprintf "invalid transition"
+    | AlphaMismatch -> Printf.sprintf "alphabet mismatch"
 
   let states nfa = nfa.states
   let init nfa = nfa.init

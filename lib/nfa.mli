@@ -26,6 +26,8 @@ module type NFA_TYPE = sig
     | InvalidStep
     | AlphaMismatch
 
+  val fmt_err : err -> string
+
   val mk_nfa
     :  states:qset
     -> init:q
