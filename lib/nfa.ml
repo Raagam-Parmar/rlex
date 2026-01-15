@@ -216,7 +216,7 @@ struct
       }
 
   let iso f f_inv nfa =
-    { states = nfa.states;
+    { states = QS.map f nfa.states;
       init   = f nfa.init;
       alpha  = nfa.alpha;
       final  = QS.map f nfa.final;
