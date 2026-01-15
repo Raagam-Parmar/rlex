@@ -34,7 +34,7 @@ let chr_set ccl =
   |> List.fold_left union null
 
 let str =
-  String.fold_left (fun p c -> union p (chr c)) null
+  String.fold_left (fun p c -> concat p (chr c)) eps
 
 let plus p = concat p (star p)
 
