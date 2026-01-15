@@ -110,10 +110,11 @@ struct
 
   let closure nfa qs =
     let rec go t =
-      let t' =
-        QS.map_union (fun s -> nfa.step s Eps) t in
-      let dif = QS.diff t' t in
-      if QS.is_empty dif
+      let t_eps =
+        QS.map_union (fun s -> nfa.step s Eps) t
+      in
+      let t' = QS.union t t_eps in
+      if QS.equal t t'
       then t
       else go t'
     in
