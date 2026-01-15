@@ -23,8 +23,8 @@ let chr_range c1 c2 =
   let cc1 = Char.code c1 in
   let cc2 = Char.code c2 in
   let smaller = min cc1 cc2 in
-  let len = Int.abs (cc1 - cc2) in
-  List.init len (fun n -> Char.chr (smaller + n))
+  let rng = Int.abs (cc1 - cc2) in
+  List.init (rng + 1) (fun n -> Char.chr (smaller + n))
   |> List.map chr
   |> List.fold_left union null
 
