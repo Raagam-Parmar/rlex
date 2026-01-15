@@ -131,15 +131,17 @@ struct
     if not valid
     then Error InvalidChar
     else
-      let rec go q str =
+      let rec go qs str =
         match str with
-        | []        -> closure nfa (QS.singleton q)
+        | [] -> closure nfa qs
         | s :: str' ->
-          let p = nfa.step q (Sym s) in
-          let reachable = closure nfa p in
-          QS.map_union (fun r -> go r str') reachable
+          let qs' =
+            closure nfa qs
+            |> QS.map_union (fun q -> nfa.step q (Sym s))
+          in
+          go qs' str'
       in
-      Ok (go q str)
+      Ok (go (QS.singleton q) str)
 
   let step_tbl nfa  =
     let neighbours q =
