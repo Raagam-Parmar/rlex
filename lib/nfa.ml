@@ -284,7 +284,7 @@ struct
             fun q s ->
               if QS.mem q nfa1.final then
                 match s with
-                | Eps -> nfa1.step q s |> QS.add nfa1.init
+                | Eps -> nfa1.step q s |> QS.add nfa2.init
                 | Sym _ -> nfa1.step q s
 
               else if 0 <= q && q <= n1 - 1 then
