@@ -19,6 +19,8 @@ module type DFA_TYPE = sig
     | InvalidFinal
     | InvalidStep
 
+  val fmt_err : err -> string
+
   val mk_dfa
     :  states:qset
     -> init:q

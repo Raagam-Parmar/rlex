@@ -22,6 +22,8 @@ sig
     | InvalidFinal
     | InvalidStep
 
+  val fmt_err : err -> string
+
   val mk_dfa :
     states   : qset
     -> init  : q
@@ -73,6 +75,14 @@ struct
     | InvalidFinal
     | InvalidStep
 
+  let fmt_err e =
+    match e with
+    | InvalidChar -> Printf.sprintf "invalid character"
+    | EmptyStates -> Printf.sprintf "empty state space"
+    | EmptyAlpha -> Printf.sprintf "empty alphabet"
+    | InvalidInit -> Printf.sprintf "invalid init state"
+    | InvalidFinal -> Printf.sprintf "invalid final chk_states"
+    | InvalidStep -> Printf.sprintf "invalid transition"
 
   let states dfa = dfa.states
   let init dfa = dfa.init
