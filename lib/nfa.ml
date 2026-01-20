@@ -15,8 +15,10 @@ sig
   type sset
 
   type ts =
-    | Sym of s
-    | Eps
+  | Sym of s
+  | Eps
+
+  type step = q -> ts -> qset
 
   val cmp_ts : ts -> ts -> int
 
@@ -82,12 +84,14 @@ struct
   type q    = Q.t
   type qset = QS.t
 
+  type step = q -> ts -> qset
+
   type t =
     { states : qset ;
       init   : q    ;
       alpha  : sset ;
       final  : qset ;
-      step   : q -> ts -> qset
+      step   : step
     }
 
   type err =

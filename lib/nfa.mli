@@ -15,6 +15,8 @@ module type NFA_TYPE = sig
     | Sym of s
     | Eps
 
+  type step = q -> ts -> qset
+
   val cmp_ts : ts -> ts -> int
 
   type err =
