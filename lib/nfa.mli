@@ -38,6 +38,7 @@ module type NFA_TYPE = sig
 
   val states : t -> qset
   val init : t -> q
+  val init_cls : t -> qset
   val alpha : t -> sset
   val final : t -> qset
   val step : t -> q -> s -> (qset, err) Result.t

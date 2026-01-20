@@ -41,6 +41,7 @@ sig
 
   val states  : t -> qset
   val init    : t -> q
+  val init_cls : t -> qset
   val alpha   : t -> sset
   val final   : t -> qset
   val step    : t -> q -> s -> (qset, err) Result.t
@@ -130,6 +131,8 @@ struct
       else go t'
     in
     go qs
+
+  let init_cls nfa = nfa.init |> QS.singleton |> closure nfa
 
   let ( let* ) = Result.bind
 
