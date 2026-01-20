@@ -15,10 +15,11 @@ sig
   type sset
 
   type ts =
-  | Sym of s
-  | Eps
+    | Sym of s
+    | Eps
 
   type step = q -> ts -> qset
+  type step' = q -> s list -> qset
 
   val cmp_ts : ts -> ts -> int
 
@@ -48,6 +49,7 @@ sig
   val final   : t -> qset
   val step    : t -> q -> s -> (qset, err) Result.t
   val step'   : t -> q -> s list -> (qset, err) Result.t
+  val unsafe_step' : t -> q -> s list -> qset
   val step_tbl : t -> (q * ts * qset) list
   val accepts : t -> s list -> (bool, err) Result.t
 
@@ -93,6 +95,8 @@ struct
       final  : qset ;
       step   : step
     }
+
+  type step' = q -> s list -> qset
 
   type err =
     | InvalidChar
@@ -160,6 +164,13 @@ struct
           go qs' str'
       in
       Ok (go (QS.singleton q) str)
+
+  let unsafe_step' nfa q str =
+    match step' nfa q str with
+    | Ok qs -> qs
+    | Error e ->
+      invalid_arg
+        (Printf.sprintf "Nfa.unsafe_step : %s\n" (fmt_err e))
 
   let step_tbl nfa  =
     let neighbours q =

@@ -16,6 +16,7 @@ module type NFA_TYPE = sig
     | Eps
 
   type step = q -> ts -> qset
+  type step' = q -> s list -> qset
 
   val cmp_ts : ts -> ts -> int
 
@@ -45,6 +46,7 @@ module type NFA_TYPE = sig
   val final : t -> qset
   val step : t -> q -> s -> (qset, err) Result.t
   val step' : t -> q -> s list -> (qset, err) Result.t
+  val unsafe_step' : t -> q -> s list -> qset
   val step_tbl : t -> (q * ts * qset) list
   val accepts : t -> s list -> (bool, err) Result.t
   val closure : t -> qset -> qset
