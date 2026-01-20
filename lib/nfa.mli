@@ -47,6 +47,7 @@ module type NFA_TYPE = sig
   val step : t -> q -> s -> (qset, err) Result.t
   val step' : t -> q -> s list -> (qset, err) Result.t
   val unsafe_step' : t -> q -> s list -> qset
+  val unsafe_stepset : t -> qset -> s -> qset
   val step_tbl : t -> (q * ts * qset) list
   val accepts : t -> s list -> (bool, err) Result.t
   val closure : t -> qset -> qset

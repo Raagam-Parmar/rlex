@@ -50,6 +50,7 @@ sig
   val step    : t -> q -> s -> (qset, err) Result.t
   val step'   : t -> q -> s list -> (qset, err) Result.t
   val unsafe_step' : t -> q -> s list -> qset
+  val unsafe_stepset : t -> qset -> s -> qset
   val step_tbl : t -> (q * ts * qset) list
   val accepts : t -> s list -> (bool, err) Result.t
 
@@ -171,6 +172,11 @@ struct
     | Error e ->
       invalid_arg
         (Printf.sprintf "Nfa.unsafe_step : %s\n" (fmt_err e))
+
+  let unsafe_stepset nfa qs s =
+    QS.map_union
+      (fun q -> unsafe_step' nfa q [s])
+      qs
 
   let step_tbl nfa  =
     let neighbours q =
