@@ -85,4 +85,10 @@ struct
 
   let next_states (rule : 'a rule) a =
     List.map (next_states_branch a) rule
+
+  let is_dead_branch branch =
+    SetInt.is_empty branch.branch_stt
+
+  let is_dead (rule : 'a rule) =
+    List.for_all is_dead_branch rule
 end
