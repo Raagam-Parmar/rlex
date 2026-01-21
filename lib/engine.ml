@@ -91,4 +91,11 @@ struct
 
   let is_dead (rule : 'a rule) =
     List.for_all is_dead_branch rule
+
+  let first_match_idx rule =
+    List.find_index
+      (fun branch ->
+         let final = NfaChar.final branch.branch_nfa in
+         SetInt.inter branch.branch_stt final |> SetInt.is_empty |> not)
+      rule
 end
