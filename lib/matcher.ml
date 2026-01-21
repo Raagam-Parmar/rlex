@@ -28,8 +28,8 @@ struct
 end
 
 module NfaChar = Nfa.Make(Alpha)
-module SetInt = Set.Make(Int)
-module SetAlpha = Set.Make(Alpha)
+module SetInt = Setutils.Make(Int)
+module SetAlpha = Setutils.Make(Alpha)
 
 exception UnexpectedError of string
 
