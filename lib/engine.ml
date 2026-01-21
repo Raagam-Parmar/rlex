@@ -77,4 +77,12 @@ struct
 
   let mk_rule pat_act : 'a rule =
     List.map mk_branch pat_act
+
+  let next_states_branch a branch =
+    let n = branch.branch_nfa in
+    let state' = NfaChar.unsafe_stepset n branch.branch_stt a in
+    { branch with branch_stt=state' }
+
+  let next_states (rule : 'a rule) a =
+    List.map (next_states_branch a) rule
 end
