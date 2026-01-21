@@ -61,51 +61,60 @@ struct
   type 'a branch =
     { branch_pat : pattern
     ; branch_act : 'a action
-    ; branch_nfa : NfaChar.t
+    }
+
+  type 'a branch_info =
+    { branch_nfa : NfaChar.t
     ; branch_stt : SetInt.t
+    ; branch     : 'a branch
     }
 
   type 'a rule = 'a branch list
 
-  let mk_branch (pat, act) =
-    let n = matcher pat in
-    { branch_pat=pat
-    ; branch_act=act
-    ; branch_nfa=n
+  type 'a rule_info = 'a branch_info list
+
+  let mk_branch_info branch =
+    let n = matcher branch.branch_pat in
+    { branch_nfa=n
     ; branch_stt=NfaChar.init_cls n
+    ; branch=branch
     }
 
-  let mk_rule pat_act : 'a rule =
-    List.map mk_branch pat_act
+  let mk_rule_info (rule : 'a rule) : 'a rule_info =
+    List.map mk_branch_info rule
 
-  let next_states_branch a branch =
-    let n = branch.branch_nfa in
-    let state' = NfaChar.unsafe_stepset n branch.branch_stt a in
-    { branch with branch_stt=state' }
+  let next_states_branch a bi =
+    let n = bi.branch_nfa in
+    let state' = NfaChar.unsafe_stepset n bi.branch_stt a in
+    { bi with branch_stt=state' }
 
-  let next_states (rule : 'a rule) a =
-    List.map (next_states_branch a) rule
+  let next_states (ri : 'a rule_info) a =
+    List.map (next_states_branch a) ri
 
-  let is_dead_branch branch =
-    SetInt.is_empty branch.branch_stt
+  let is_dead_branch bi =
+    SetInt.is_empty bi.branch_stt
 
-  let is_dead (rule : 'a rule) =
-    List.for_all is_dead_branch rule
+  let is_dead (ri : 'a rule_info) =
+    List.for_all is_dead_branch ri
 
-  let first_match_idx rule =
+  let first_match_idx (ri : 'a rule_info) =
     List.find_index
       (fun branch ->
          let final = NfaChar.final branch.branch_nfa in
          SetInt.inter branch.branch_stt final |> SetInt.is_empty |> not)
-      rule
+      ri
 
-  let rec match_longest ?(lex_last_p_i=None) branch (lexbuf : Lexbuf.t) =
+  let rec match_longest
+      ?(lex_last_p_i=None)
+      (ri : 'a rule_info)
+      (lexbuf : Lexbuf.t)
+    =
     if lexbuf.eof_reached
     then
       (* Input exhausted, EOF reached. *)
       (* Check if the currently given tracker has a match and return it.
          If not, return the last match. If no last match exists, fail. *)
-      let match_idx = first_match_idx branch in
+      let match_idx = first_match_idx ri in
       match match_idx with
       | Some i -> i
       | None ->
@@ -124,24 +133,24 @@ struct
 
       (* Check if any of the patterns have matched so far before scanning the
          next character, pointed to by lexbuf.lex_curr_p. *)
-      let match_idx = first_match_idx branch in
+      let match_idx = first_match_idx ri in
       match match_idx with
       | None ->
         (* None of the current states are final. *)
         (* Check if any branch is alive, if not, backtrack to the last matched
            position. If last matched position is None, fail. *)
-        if is_dead branch
+        if is_dead ri
         then
           match lex_last_p_i with
           | None -> failwith "lexing failure.2\n"
           | Some (lex_last_p, i) -> (lexbuf.lex_curr_p <- lex_last_p; i)
         else
-          let tracker' = next_states branch a in
+          let tracker' = next_states ri a in
           match_longest ~lex_last_p_i:None tracker' lexbuf
 
       | Some i ->
         (* i is the index of the first action matched in the rule. *)
-        let tracker' = next_states branch a in
+        let tracker' = next_states ri a in
         match_longest ~lex_last_p_i:(Some (lex_prev_p, i)) tracker' lexbuf
 
   let lexeme lexbuf =
@@ -162,7 +171,7 @@ struct
       then lexbuf.eof_reached <- true
       else lexbuf.eof_reached <- false
     in
-    let i = match_longest rule lexbuf in
+    let i = match_longest (mk_rule_info rule) lexbuf in
     let action = (List.nth rule i).branch_act lexbuf in
     action
 end
