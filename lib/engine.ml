@@ -151,4 +151,18 @@ struct
       lexbuf.lex_buf
       lexbuf.lex_start_p.pos_cnum
       len
+
+  let match_rule (rule : 'a rule) lexbuf =
+    let open Lexbuf in
+
+    let () = lexbuf.lex_start_p <- lexbuf.lex_curr_p in
+    let eof_reached = lexbuf.lex_curr_p.pos_cnum = lexbuf.lex_buf_len in
+    let () =
+      if eof_reached
+      then lexbuf.eof_reached <- true
+      else lexbuf.eof_reached <- false
+    in
+    let i = match_longest rule lexbuf in
+    let action = (List.nth rule i).branch_act lexbuf in
+    action
 end
