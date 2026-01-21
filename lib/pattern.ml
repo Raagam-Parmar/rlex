@@ -24,6 +24,20 @@ let chr_range c1 c2 =
   |> List.map chr
   |> List.fold_left union null
 
+let anychr = chr_range (Char.chr 0) (Char.chr 255)
+
+let union_many ps =
+  List.fold_left (fun p1 p2 -> union p1 p2) null ps
+
+let chr_list cl =
+  List.map chr cl |> union_many
+
+let allbut cl =
+  List.init 256 (fun n -> Char.chr n)
+  |> List.filter (fun c -> not (List.exists (( = ) c) cl))
+  |> List.map chr
+  |> union_many
+
 let chr_set ccl =
   ccl
   |> List.map (fun (c1, c2) -> chr_range c1 c2)
