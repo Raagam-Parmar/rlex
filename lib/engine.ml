@@ -51,6 +51,13 @@ struct
   let advance lexbuf =
     let i = lexbuf.lex_curr_p.pos_cnum in
     lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_cnum = i + 1 }
+
+  let next_line lexbuf =
+    let pos = lexbuf.lex_curr_p in
+    lexbuf.lex_curr_p <-
+      { pos with pos_bol = pos.pos_cnum;
+                 pos_lnum = pos.pos_lnum + 1
+      }
 end
 
 
