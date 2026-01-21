@@ -143,4 +143,12 @@ struct
         (* i is the index of the first action matched in the rule. *)
         let tracker' = next_states branch a in
         match_longest ~lex_last_p_i:(Some (lex_prev_p, i)) tracker' lexbuf
+
+  let lexeme lexbuf =
+    let open Lexbuf in
+    let len = lexbuf.lex_curr_p.pos_cnum - lexbuf.lex_start_p.pos_cnum in
+    String.sub
+      lexbuf.lex_buf
+      lexbuf.lex_start_p.pos_cnum
+      len
 end
