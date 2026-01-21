@@ -98,4 +98,49 @@ struct
          let final = NfaChar.final branch.branch_nfa in
          SetInt.inter branch.branch_stt final |> SetInt.is_empty |> not)
       rule
+
+  let rec match_longest ?(lex_last_p_i=None) branch (lexbuf : Lexbuf.t) =
+    if lexbuf.eof_reached
+    then
+      (* Input exhausted, EOF reached. *)
+      (* Check if the currently given tracker has a match and return it.
+         If not, return the last match. If no last match exists, fail. *)
+      let match_idx = first_match_idx branch in
+      match match_idx with
+      | Some i -> i
+      | None ->
+        match lex_last_p_i with
+        | Some (lex_last_p, i) -> (lexbuf.lex_curr_p <- lex_last_p; i)
+        | None -> failwith "lexing failure.1\n"
+    else
+      (* Input has not been exhausted, get the next character and advance the
+         buffer. *)
+      let c = Lexbuf.unsafe_next_char lexbuf in
+      let a = Alpha.Chr c in
+      let lex_prev_p = lexbuf.lex_curr_p in
+      let () = Lexbuf.advance lexbuf in
+      let eof_reached = lexbuf.lex_curr_p.pos_cnum = lexbuf.lex_buf_len in
+      let () = lexbuf.eof_reached <- eof_reached in
+
+      (* Check if any of the patterns have matched so far before scanning the
+         next character, pointed to by lexbuf.lex_curr_p. *)
+      let match_idx = first_match_idx branch in
+      match match_idx with
+      | None ->
+        (* None of the current states are final. *)
+        (* Check if any branch is alive, if not, backtrack to the last matched
+           position. If last matched position is None, fail. *)
+        if is_dead branch
+        then
+          match lex_last_p_i with
+          | None -> failwith "lexing failure.2\n"
+          | Some (lex_last_p, i) -> (lexbuf.lex_curr_p <- lex_last_p; i)
+        else
+          let tracker' = next_states branch a in
+          match_longest ~lex_last_p_i:None tracker' lexbuf
+
+      | Some i ->
+        (* i is the index of the first action matched in the rule. *)
+        let tracker' = next_states branch a in
+        match_longest ~lex_last_p_i:(Some (lex_prev_p, i)) tracker' lexbuf
 end
