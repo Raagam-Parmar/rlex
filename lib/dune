@@ -1,3 +1,3 @@
 (library
  (name rlex)
- (modules nfa dfa pattern matcher setutils))
+ (modules nfa dfa pattern matcher engine setutils))
