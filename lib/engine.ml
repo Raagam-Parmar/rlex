@@ -66,4 +66,15 @@ struct
     }
 
   type 'a rule = 'a branch list
+
+  let mk_branch (pat, act) =
+    let n = matcher pat in
+    { branch_pat=pat
+    ; branch_act=act
+    ; branch_nfa=n
+    ; branch_stt=NfaChar.init_cls n
+    }
+
+  let mk_rule pat_act : 'a rule =
+    List.map mk_branch pat_act
 end
