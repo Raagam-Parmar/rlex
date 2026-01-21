@@ -1,3 +1,6 @@
+open Pattern
+open Matcher
+
 module Position =
 struct
   type t =
@@ -48,4 +51,19 @@ struct
   let advance lexbuf =
     let i = lexbuf.lex_curr_p.pos_cnum in
     lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_cnum = i + 1 }
+end
+
+
+module Rules =
+struct
+  type 'a action = Lexbuf.t -> 'a
+
+  type 'a branch =
+    { branch_pat : pattern
+    ; branch_act : 'a action
+    ; branch_nfa : NfaChar.t
+    ; branch_stt : SetInt.t
+    }
+
+  type 'a rule = 'a branch list
 end
